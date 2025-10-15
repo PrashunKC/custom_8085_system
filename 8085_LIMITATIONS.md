@@ -249,17 +249,17 @@ We're using less than 3% of available memory!
 ## The Bottom Line
 
 ### What's Impossible
-❌ Adding 512MB of RAM (would need 29-bit addressing)
-❌ Direct access to more than 64KB at once
-❌ Using modern memory management (paging, virtual memory)
+- Adding 512MB of RAM (would need 29-bit addressing)
+- Direct access to more than 64KB at once
+- Using modern memory management (paging, virtual memory)
 
 ### What's Possible
-✅ Reorganize 64KB for better efficiency
-✅ Support 32 tasks instead of 8
-✅ Give user programs 47KB instead of 31KB
-✅ Simulate bank switching (4 × 64KB = 256KB logical)
-✅ Use external "disk" storage (unlimited files)
-✅ Compress OS code to save space
+- Reorganize 64KB for better efficiency
+- Support 32 tasks instead of 8
+- Give user programs 47KB instead of 31KB
+- Simulate bank switching (4 × 64KB = 256KB logical)
+- Use external "disk" storage (unlimited files)
+- Compress OS code to save space
 
 ## Technical Specs Summary
 
@@ -294,7 +294,7 @@ The 8085's 64KB limit isn't a bug - it's a **fundamental architectural constrain
 - Development tools
 - Entire home computers (Altair 8800, IMSAI 8080)
 
-We can't add 512MB, but we can make the 64KB we have work **really efficiently**! 🚀
+We can't add 512MB, but we can make the 64KB we have work **really efficiently**!
 
 ---
 
@@ -304,4 +304,4 @@ We can't add 512MB, but we can make the 64KB we have work **really efficiently**
 - Compressed OS code
 - Better memory layout
 
-*Understanding the hardware makes you a better programmer!* 💡
+*Understanding the hardware makes you a better programmer!*
