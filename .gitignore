@@ -1,0 +1,36 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+
+# Qt MOC files
+*.moc
+*.moc.cpp
+
+# Executables
+8085_bios/8085_bios_system
+
+# Assembly intermediate files
+*.p
+*.lst
+
+# Build directories (but keep bios.bin as it's needed)
+8085_bios/build/*.hex
+8085_bios/build/*.lst
+8085_bios/build/*.p
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*~
