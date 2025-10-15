@@ -1,0 +1,92 @@
+# 8085 BIOS System - Git Ignore File
+
+# Compiled binaries
+8085_bios_system
+8085_emulator
+*.o
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+Build/
+BUILD/
+
+# Qt MOC generated files
+*.moc
+*.moc.cpp
+moc_*.cpp
+moc_*.h
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+*.cmake
+!CMakeLists.txt
+
+# Assembly output
+*.bin
+*.hex
+*.lst
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+*_backup.*
+*.old
+
+# Log files
+*.log
+*.txt.user
+
+# Core dumps
+core
+core.*
+
+# Object files
+*.obj
+*.a
+*.lib
+
+# Shared objects
+*.so
+*.dylib
+*.dll
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Documentation build artifacts
+*.pdf
+*.aux
+*.toc
