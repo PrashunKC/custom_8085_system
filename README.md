@@ -222,4 +222,4 @@ This system provides everything needed to develop a simple operating system:
 
 ## License
 
-Public domain / Unlicense. Do whatever you want with this code.
+A permissive license similar to the BSD 2-Clause License, but with a 3rd clause that prohibits others from using the name of the copyright holder or its contributors to promote derived products without written consent.
