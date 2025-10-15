@@ -190,16 +190,24 @@ To add more I/O devices:
 ## Project Structure
 
 ```
-8085_bios/
+custom_8085_system/
 ├── src/
-│   └── bios.asm          # Monitor BIOS source code
-├── build/
+│   ├── bios.asm          # Monitor BIOS source code
+│   ├── os_multitask.asm  # OS with shell + multitasking (Phase A+C)
+│   ├── os_shell.asm      # OS shell (Phase A standalone)
+│   ├── os_v03.asm        # OS version 0.3
+│   └── scheduler.asm     # Task scheduler (Phase C standalone)
+├── tools/
+│   ├── assemble.py       # Python assembler wrapper
+│   └── assemble.sh       # Shell assembler script
+├── build/                # Created during build process
 │   ├── bios.bin          # Assembled BIOS ROM
 │   └── bios.hex          # Intel HEX format
-├── cpu8085.h/cpp         # 8085 emulator core (from 8085_emulation project)
+├── cpu8085.h             # 8085 emulator core header
+├── cpu8085.cpp           # 8085 emulator implementation
 ├── bios_gui.cpp          # Qt5 GUI with interactive terminal
 ├── CMakeLists.txt        # CMake build configuration
-├── Makefile              # Make build configuration
+├── test_minimal.asm      # Minimal test assembly file
 └── README.md             # This file
 ```
 
