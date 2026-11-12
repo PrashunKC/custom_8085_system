@@ -1,3 +1,4 @@
+// Banked-memory 8085 execution core and debugger-facing state helpers.
 #include "cpu8085.h"
 #include <sstream>
 #include <iomanip>

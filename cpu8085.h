@@ -10,9 +10,10 @@
 using IOReadCallback = std::function<uint8_t(uint8_t port)>;
 using IOWriteCallback = std::function<void(uint8_t port, uint8_t value)>;
 
+// Intel 8085 model with banked memory and callback-based I/O devices.
 class CPU8085 {
 public:
-    // Registers
+    // Programmer-visible registers.
     uint8_t A;      // Accumulator
     uint8_t B, C;   // BC register pair
     uint8_t D, E;   // DE register pair
@@ -20,7 +21,7 @@ public:
     uint16_t SP;    // Stack Pointer
     uint16_t PC;    // Program Counter
     
-    // Flags
+    // 8085 condition flags.
     struct Flags {
         bool S;  // Sign
         bool Z;  // Zero
@@ -29,45 +30,49 @@ public:
         bool CY; // Carry
     } flags;
     
-    // Memory Banking (8 banks × 64KB = 512KB)
+    // Eight independently allocated 64 KiB banks; only current_bank is active.
     static constexpr int NUM_BANKS = 8;
     uint8_t* memory_banks[NUM_BANKS];  // Pointers to heap-allocated banks
     int current_bank;
     
-    // State
+    // Execution state.
     bool halted;
     bool interruptEnabled;
     
     CPU8085();
     ~CPU8085();
+
+    // Restore registers, flags, banks, and execution state.
     void reset();
-    void step();  // Execute one instruction
+
+    // Fetch and execute one opcode unless halted.
+    void step();
     uint8_t fetchByte();
     uint16_t fetchWord();
     
-    // Helper functions
+    // Human-readable state used by the Qt debugger.
     std::string getRegisterState() const;
     std::string getFlagsState() const;
     uint8_t getMemory(uint16_t address) const;
     void setMemory(uint16_t address, uint8_t value);
     
-    // Bank switching functions
+    // Select and inspect the active or an explicitly named memory bank.
     void switchBank(int bank);
     int getCurrentBank() const { return current_bank; }
     uint8_t getMemoryFromBank(int bank, uint16_t address) const;
     void setMemoryInBank(int bank, uint16_t address, uint8_t value);
     
-    // Load program into memory
+    // Copy bytes into the active bank.
     void loadProgram(const uint8_t* program, size_t size, uint16_t startAddress = 0x0000);
     
-    // Load binary file (ROM/BIOS) into memory
+    // Load a host binary file into the active bank.
     bool loadBinary(const char* filename, uint16_t startAddress = 0x0000);
     
-    // I/O port callbacks - set these to handle IN/OUT instructions
+    // Device callbacks invoked by IN and OUT instructions.
     IOReadCallback ioReadCallback;
     IOWriteCallback ioWriteCallback;
     
-    // Set I/O callbacks
+    // Replace the device callbacks.
     void setIOCallbacks(IOReadCallback readCb, IOWriteCallback writeCb) {
         ioReadCallback = readCb;
         ioWriteCallback = writeCb;

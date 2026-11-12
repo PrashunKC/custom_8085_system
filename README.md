@@ -1,233 +1,109 @@
-# 8085 BIOS System - Interactive Development Environment
+# 8085 BIOS System
 
-A complete 8085 microprocessor system with integrated BIOS/monitor ROM and interactive GUI. Perfect for learning 8085 programming, developing operating systems, or testing embedded software.
-
-## Features
-
-### BIOS Monitor ROM
-- Reset initialization with banner
-- Interactive command prompt with basic commands:
-  - **H**: Help - display available commands
-  - **D addr len**: Dump memory in hex format
-  - **M addr**: Modify memory bytes interactively
-  - **G addr**: Jump to address and execute
-  - **L**: Load Intel HEX programs into memory
-- Console I/O via I/O ports 0 (input) and 1 (output)
-
-### Emulator Features
-- **Complete 8085 instruction set** (all 246 valid opcodes)
-- **Interactive Terminal** - Type commands directly into the BIOS
-- **Real-time Register Display** - Watch A, B, C, D, E, H, L, SP, PC
-- **Flags Display** - Monitor S, Z, AC, P, CY flags
-- **Memory Viewer** - See first 256 bytes of memory
-- **Step/Run/Stop Controls** - Debug or run programs
-- **Load Programs** - Load binary files for testing
-- **GUI built with Qt5** - Modern, responsive interface
+This project combines a C++ Intel 8085 emulator with a Qt5 monitor GUI and a
+small 8085 BIOS/monitor written in assembly. It is separate from
+[`8085_emulation`](../8085_emulation/), which provides a simpler single-bank
+CPU debugger without the BIOS terminal and banked-memory model.
 
 ## Architecture
 
-The system integrates:
-- **C++ 8085 Emulator** (`cpu8085.cpp`) - Full instruction set with I/O callbacks
-- **BIOS Monitor** (`src/bios.asm`) - Assembled to `build/bios.bin`, loaded at 0x0000
-- **Qt5 GUI** (`bios_gui.cpp`) - Interactive terminal and system controls
-- **I/O Port System** - Port 0 (console in), Port 1 (console out)
+The emulator models an 8-bit 8085 CPU with:
 
-This is written in C++17 with Qt5 for the GUI, and 8080/8085-compatible assembly (using Macroassembler AS `asl`) for the BIOS.
+- 8 banks of 64 KiB memory (512 KiB total, one bank visible at a time).
+- The standard registers and S/Z/AC/P/CY flags.
+- 8085 instruction execution, stack operations, and reset behavior.
+- `IN`/`OUT` callbacks used by the GUI to connect port 0 to terminal input and
+  port 1 to terminal output.
+- Binary loading at an arbitrary 16-bit address, with user programs defaulting
+  to `0x2000`.
 
-## Assumptions and I/O contract
+The Qt application in `bios_gui.cpp` provides BIOS loading, reset, step, run,
+stop, program loading, register/flag display, memory inspection, and a
+terminal widget. The BIOS monitor in `src/bios.asm` runs from `0x0000` and
+offers `H`, `D`, `M`, `G`, and `L` commands.
 
-By default, the monitor uses two I/O ports for console:
+## BIOS monitor contract
 
-- IN from port 0: returns the next ASCII byte if available; returns 0 if no character. The monitor busy-waits until non-zero.
-- OUT to port 1: write an ASCII byte to the console output.
+The GUI's callbacks implement the ports expected by the monitor:
 
-You can change these ports at the top of `src/bios.asm` by editing the equates `CONIN_PORT` and `CONOUT_PORT`.
+| Port | Direction | Meaning |
+| ---: | --- | --- |
+| 0 | `IN` | Next terminal byte, or `0` when input is unavailable |
+| 1 | `OUT` | Append one ASCII byte to the terminal |
 
-If your emulator has different semantics (e.g., separate status ports), you can adapt the `con_getc` and `con_putc` routines accordingly.
+The BIOS busy-waits on port 0 when it needs input. Change `CONIN_PORT` and
+`CONOUT_PORT` in [`src/bios.asm`](src/bios.asm) and update the GUI callbacks
+together if the device contract changes.
 
-## Layout
+## Repository layout
 
-- `src/bios.asm` — Monitor BIOS source, ORG 0x0000
-- `Makefile` — Build targets for .bin and .hex
-- `tools/assemble.sh` — Helper script to assemble with `asl`
+| Path | Purpose |
+| --- | --- |
+| `cpu8085.h/.cpp` | CPU state, instruction dispatch, memory banks, and I/O callbacks |
+| `bios_gui.cpp` | Qt5 terminal, debugger controls, and display panels |
+| `src/bios.asm` | BIOS monitor source |
+| `src/os_*.asm` | Experimental shell and multitasking OS variants |
+| `src/scheduler.asm` | Standalone scheduler experiment |
+| `tools/assemble.sh` | Assemble BIOS with Macroassembler AS and emit binary/HEX |
+| `tools/assemble.py` | Small Python 8085 assembler for supported mnemonics |
+| `test_minimal.asm` | Minimal assembly input for manual emulator tests |
 
-## Prerequisites
+The `8085_LIMITATIONS.md` document explains the 16-bit address-space limit and
+why bank switching is used to expose more than 64 KiB over time.
 
-### Required
+## Building
 
-- **Qt5 development libraries**:
-  ```bash
-  sudo dnf install qt5-qtbase-devel  # Fedora
-  # or
-  sudo apt-get install qtbase5-dev   # Ubuntu/Debian
-  ```
-
-- **C++ compiler** (g++ 7+ or clang++)
-
-### Optional (for building BIOS from source)
-
-- **Macroassembler AS** (`asl`) and its `p2bin`/`p2hex` tools
-
-  On Fedora/RHEL:
-  ```bash
-  sudo dnf install asl
-  ```
-
-  On Debian/Ubuntu (may need to build from source):
-  ```bash
-  sudo apt-get install -y build-essential bison flex
-  git clone https://github.com/alfako/asl.git
-  cd asl
-  make
-  sudo make install
-  ```
-
-## Build
-
-### Quick Build (using Make)
+### Assemble the BIOS directly
 
 ```bash
-cd /home/kde/Documents/8085_bios
-make quick
+./tools/assemble.sh src/bios.asm
 ```
 
-This builds:
-- `build/bios.bin` — BIOS ROM (assembled from `src/bios.asm`)
-- `8085_bios_system` — Qt GUI emulator executable
+This requires `asl`, `p2bin`, and `p2hex` on `PATH` (or the `ASL`, `P2BIN`,
+and `P2HEX` environment variables). Outputs are written to `build/`.
 
-### Alternative: CMake Build
+`tools/assemble.py` is an independent, intentionally limited assembler:
 
 ```bash
-mkdir build && cd build
-cmake ..
-make
+python3 tools/assemble.py test_minimal.asm build/test_minimal.bin
 ```
 
-## Run
+### Build the Qt application
 
 ```bash
-./8085_bios_system
+cmake -S . -B build/cmake
+cmake --build build/cmake
+./build/cmake/8085_bios_system
 ```
 
-or
+Qt5 development packages and a C++17 compiler are required. The CMake file
+declares a BIOS custom target, but the current repository has no root Makefile;
+if that target cannot create `build/bios.bin`, assemble the BIOS first with
+`tools/assemble.sh`.
 
-```bash
-make run
-```
+## Running the monitor
 
-## Usage
+1. Start the GUI.
+2. Load or assemble `build/bios.bin`.
+3. Click **Run** or **Step**.
+4. At the `>` prompt, use:
+   - `H` for help.
+   - `D 2000 40` to dump 64 bytes.
+   - `M 2100` to modify memory.
+   - `G 1000` to jump to an address.
+   - `L` to receive Intel HEX records.
 
-1. **Launch the emulator** - The GUI will open with an interactive terminal
-2. **Click "Load BIOS"** - Loads `build/bios.bin` into memory at 0x0000
-3. **Click "Run"** - The 8085 starts executing from 0x0000
-4. **See the BIOS banner** in the terminal
-5. **Type commands** at the `>` prompt (try `H` for help)
-6. **Use BIOS commands** to dump memory, modify bytes, or load programs
+The GUI's **Load Program** action loads a binary at `0x2000`; use `G 2000` in
+the monitor to execute it.
 
-### Clean
+## Limitations
 
-```bash
-make clean
-```
-
-## BIOS Command Examples
-
-When the BIOS monitor prompt (`>`) appears, you can use these commands:
-
-- **H** - Display help
-- **D 2000 40** - Dump 64 (0x40) bytes from address 0x2000
-- **M 2100** - Modify bytes at address 0x2100
-  - Enter hex bytes like `3E C3 00 10`
-  - Press `.` or Enter on blank line to finish
-- **G 1000** - Jump to address 0x1000 and execute
-- **L** - Load Intel HEX format program
-  - Paste Intel HEX records into terminal
-  - Loader auto-detects EOF record
-
-Notes:
-- Hex numbers are case-insensitive
-- Whitespace between hex digits is flexible
-- HEX loader supports record types 00 (data) and 01 (EOF)
-
-## Developing Your Own Programs/OS
-
-### Method 1: Write Assembly & Load
-
-1. Write your program in 8085 assembly (e.g., `myprogram.asm`)
-2. Assemble it with your preferred assembler (asl, as85, etc.)
-3. Use BIOS **L** command to load Intel HEX
-4. Use BIOS **G** command to execute
-
-### Method 2: Direct Binary Load
-
-1. Write program in assembly, assemble to `.bin`
-2. Click "Load Program..." in the GUI
-3. Program loads at 0x2000 by default
-4. Use BIOS command `G 2000` to execute
-
-### Method 3: Extend the BIOS
-
-Edit `src/bios.asm` to add:
-- New monitor commands
-- Device drivers
-- System calls for your OS
-- Boot loader logic
-
-Then rebuild and test!
-
-## I/O Port Configuration
-
-The BIOS uses these I/O ports (configurable in `src/bios.asm`):
-
-- **Port 0 (IN)**: Console input - returns ASCII character or 0 if no key pressed
-- **Port 1 (OUT)**: Console output - sends ASCII character to terminal
-
-To add more I/O devices:
-- Define new port numbers in your program
-- Use `IN port` / `OUT port` instructions
-- Extend `cpu8085.cpp` I/O callbacks if needed for special hardware simulation
-
-## Project Structure
-
-```
-custom_8085_system/
-├── src/
-│   ├── bios.asm          # Monitor BIOS source code
-│   ├── os_multitask.asm  # OS with shell + multitasking (Phase A+C)
-│   ├── os_shell.asm      # OS shell (Phase A standalone)
-│   ├── os_v03.asm        # OS version 0.3
-│   └── scheduler.asm     # Task scheduler (Phase C standalone)
-├── tools/
-│   ├── assemble.py       # Python assembler wrapper
-│   └── assemble.sh       # Shell assembler script
-├── build/                # Created during build process
-│   ├── bios.bin          # Assembled BIOS ROM
-│   └── bios.hex          # Intel HEX format
-├── cpu8085.h             # 8085 emulator core header
-├── cpu8085.cpp           # 8085 emulator implementation
-├── bios_gui.cpp          # Qt5 GUI with interactive terminal
-├── CMakeLists.txt        # CMake build configuration
-├── test_minimal.asm      # Minimal test assembly file
-└── README.md             # This file
-```
-
-## Troubleshooting
-
-- **BIOS doesn't load**: Make sure `build/bios.bin` exists (run `make` first)
-- **No terminal output**: Check that BIOS is loaded and you clicked "Run"
-- **Keyboard not working**: Terminal widget should have focus; click in the terminal area
-- **Assembler errors**: Check `build/bios.lst` for assembly errors
-- **Emulator won't build**: Ensure Qt5 development packages are installed
-
-## Future OS Development
-
-This system provides everything needed to develop a simple operating system:
-
-1. **BIOS provides**: Console I/O, memory management primitives, program loader
-2. **You can add**: File system, process scheduling, interrupt handlers
-3. **Extend with**: More I/O devices, disk simulation, network simulation
-4. **Test immediately**: No need for real hardware!
+- The emulator is an instructional model, not cycle-accurate hardware.
+- The BIOS and GUI must agree on port semantics.
+- The Python assembler supports only the instruction/directive subset encoded
+  in its opcode table; Macroassembler AS remains the authoritative BIOS path.
+- The experimental OS assembly files are not part of the default GUI build.
 
 ## License
 
-A permissive license similar to the BSD 2-Clause License, but with a 3rd clause that prohibits others from using the name of the copyright holder or its contributors to promote derived products without written consent.
+See [`LICENSE`](LICENSE). The license text governs redistribution and use.

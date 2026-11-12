@@ -1,3 +1,4 @@
+// Qt5 BIOS monitor UI, terminal device bridge, and CPU debugger controls.
 #include <QApplication>
 #include <QMainWindow>
 #include <QWidget>
